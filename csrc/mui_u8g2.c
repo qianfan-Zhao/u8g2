@@ -1540,7 +1540,23 @@ uint8_t mui_u8g2_u8_opt_line_wa_mud_pf(mui_t *ui, uint8_t msg)
   return 0;
 }
 
+static void mui_u8g2_draw_chkbox_wm(mui_t *ui, u8g2_uint_t is_checked, u8g2_uint_t flags)
+{
+  u8g2_t *u8g2 = mui_get_U8g2(ui);
+  u8g2_uint_t w = 0;
+  u8g2_uint_t a = u8g2_GetAscent(u8g2);
 
+  u8g2_DrawCheckbox(u8g2, mui_get_x(ui), mui_get_y(ui), a, is_checked);
+  if ( ui->text[0] != '\0' )
+  {
+    w =  u8g2_GetUTF8Width(u8g2, ui->text);
+    //u8g2_SetFontMode(u8g2, 1);
+    a += 2;       /* add gap between the checkbox and the text area */
+    u8g2_DrawUTF8(u8g2, mui_get_x(ui)+a, mui_get_y(ui), ui->text);
+  }
+
+  u8g2_DrawButtonFrame(u8g2, mui_get_x(ui), mui_get_y(ui), flags, w+a, 1, MUI_U8G2_V_PADDING);
+}
 
 /*
 
@@ -1579,25 +1595,8 @@ uint8_t mui_u8g2_u8_chkbox_wm_pi(mui_t *ui, uint8_t msg)
       {
         flags |= U8G2_BTN_INV;
       }
-      
-      {
-        u8g2_uint_t w = 0;
-        u8g2_uint_t a = u8g2_GetAscent(u8g2);
-        if ( *value )
-          u8g2_DrawCheckbox(u8g2, mui_get_x(ui), mui_get_y(ui), a, 1);
-        else
-          u8g2_DrawCheckbox(u8g2, mui_get_x(ui), mui_get_y(ui), a, 0);
-        
-        if ( ui->text[0] != '\0' )
-        {
-          w =  u8g2_GetUTF8Width(u8g2, ui->text);
-          //u8g2_SetFontMode(u8g2, 1);
-          a += 2;       /* add gap between the checkbox and the text area */
-          u8g2_DrawUTF8(u8g2, mui_get_x(ui)+a, mui_get_y(ui), ui->text);
-        }
-        
-        u8g2_DrawButtonFrame(u8g2, mui_get_x(ui), mui_get_y(ui), flags, w+a, 1, MUI_U8G2_V_PADDING);
-      }
+
+      mui_u8g2_draw_chkbox_wm(ui, *value == ui->arg, flags);
       break;
     case MUIF_MSG_FORM_START:
       break;
@@ -1610,6 +1609,38 @@ uint8_t mui_u8g2_u8_chkbox_wm_pi(mui_t *ui, uint8_t msg)
     case MUIF_MSG_VALUE_DECREMENT:
       (*value)++;
       if ( *value > 1 ) *value = 0;      
+      break;
+    case MUIF_MSG_CURSOR_LEAVE:
+      break;
+    case MUIF_MSG_TOUCH_DOWN:
+      break;
+    case MUIF_MSG_TOUCH_UP:
+      break;
+  }
+  return 0;
+}
+
+uint8_t mui_u8g2_u8_chkbox_wm_pf(mui_t *ui, uint8_t msg)
+{
+  u8g2_t *u8g2 = mui_get_U8g2(ui);
+  uint8_t *value = (uint8_t *)muif_get_data(ui->uif);
+  switch(msg)
+  {
+    case MUIF_MSG_DRAW:
+      if ( *value > 1 ) *value = 1;
+      mui_u8g2_draw_chkbox_wm(ui, *value == ui->arg, 0);
+      break;
+    case MUIF_MSG_FORM_START:
+      break;
+    case MUIF_MSG_FORM_END:
+      break;
+    case MUIF_MSG_CURSOR_ENTER:
+      break;
+    case MUIF_MSG_CURSOR_SELECT:
+    case MUIF_MSG_VALUE_INCREMENT:
+    case MUIF_MSG_VALUE_DECREMENT:
+      (*value)++;
+      if ( *value > 1 ) *value = 0;
       break;
     case MUIF_MSG_CURSOR_LEAVE:
       break;
